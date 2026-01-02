@@ -1,0 +1,31 @@
+[gd_scene load_steps=3 format=3 uid="uid://c8m2n3o4p5q6r"]
+
+[ext_resource type="Script" uid="uid://cbjwn1efuwm10" path="res://scripts/platform.gd" id="1_platform"]
+[ext_resource type="Texture2D" uid="uid://wa2j5kna3da6" path="res://assets/sprites/platforms/Platform_01.png" id="2_platform_texture"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_collision"]
+size = Vector2(152, 54)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_detector"]
+size = Vector2(152, 20)
+
+[node name="Platform" type="StaticBody2D" groups=["platforms"]]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("1_platform")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("2_platform_texture")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_collision")
+one_way_collision = true
+
+[node name="LandingDetector" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LandingDetector"]
+position = Vector2(0, -27)
+shape = SubResource("RectangleShape2D_detector")

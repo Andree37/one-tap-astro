@@ -1,0 +1,173 @@
+[gd_scene load_steps=10 format=3 uid="uid://b7v8xax0y102a"]
+
+[ext_resource type="PackedScene" uid="uid://dqm3yxvb8akn7" path="res://scenes/player.tscn" id="1_main_player"]
+[ext_resource type="PackedScene" uid="uid://c8m2n3o4p5q6r" path="res://scenes/platform.tscn" id="2_main_platform"]
+[ext_resource type="Script" uid="uid://binwds573pxg" path="res://scripts/platform_spawner.gd" id="3_main_spawner"]
+[ext_resource type="Script" uid="uid://beciibgy155yl" path="res://scripts/game_manager.gd" id="4_main_manager"]
+[ext_resource type="Script" uid="uid://cfcd6eh10luyr" path="res://scripts/camera_scroller.gd" id="5_camera_scroller"]
+[ext_resource type="Texture2D" uid="uid://bvx8xay001a2b" path="res://assets/backgrounds/night-beach-sky.png" id="6_bg_sky"]
+[ext_resource type="Texture2D" uid="uid://dwx8xay001a2d" path="res://assets/backgrounds/night-beach-cloud-01.png" id="7_bg_cloud"]
+[ext_resource type="Texture2D" uid="uid://cvx8xay001a2c" path="res://assets/backgrounds/night-beach-mountain-01.png" id="8_bg_mountain"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_death_zone"]
+size = Vector2(2000, 100)
+
+[node name="Main" type="Node2D"]
+script = ExtResource("4_main_manager")
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+scroll_ignore_camera_zoom = true
+
+[node name="Sky" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.1, 0.1)
+motion_mirroring = Vector2(0, 1280)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/Sky"]
+position = Vector2(360, 640)
+scale = Vector2(2, 2)
+texture = ExtResource("6_bg_sky")
+
+[node name="Clouds" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.3, 0.3)
+motion_mirroring = Vector2(0, 1280)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/Clouds"]
+position = Vector2(360, 640)
+scale = Vector2(2, 2)
+texture = ExtResource("7_bg_cloud")
+
+[node name="Mountains" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.5, 0.5)
+motion_mirroring = Vector2(0, 1280)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/Mountains"]
+position = Vector2(360, 640)
+scale = Vector2(2, 2)
+texture = ExtResource("8_bg_mountain")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(360, 640)
+script = ExtResource("5_camera_scroller")
+
+[node name="Player" parent="." instance=ExtResource("1_main_player")]
+position = Vector2(360, 711)
+
+[node name="StartingPlatform" parent="." instance=ExtResource("2_main_platform")]
+position = Vector2(360, 811)
+speed = 0.0
+
+[node name="PlatformSpawner" type="Node2D" parent="."]
+position = Vector2(360, 360)
+script = ExtResource("3_main_spawner")
+platform_scenes = Array[PackedScene]([ExtResource("2_main_platform")])
+
+[node name="DeathZone" type="Area2D" parent="."]
+position = Vector2(360, 1500)
+collision_layer = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DeathZone"]
+shape = SubResource("RectangleShape2D_death_zone")
+
+[node name="UI" type="CanvasLayer" parent="."]
+process_mode = 3
+
+[node name="ScoreLabel" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 200.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 32
+text = "Score: 0"
+horizontal_alignment = 1
+
+[node name="HighscoreLabel" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 70.0
+offset_right = 200.0
+offset_bottom = 100.0
+theme_override_font_sizes/font_size = 20
+text = "Best: 0"
+horizontal_alignment = 1
+
+[node name="StartOverlay" type="ColorRect" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.8)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/StartOverlay"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -120.0
+offset_right = 250.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="UI/StartOverlay/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "One Tap Astronaut"
+horizontal_alignment = 1
+
+[node name="InstructionLabel" type="Label" parent="UI/StartOverlay/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Hold mouse to direct jump
+Point to jump!"
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="UI/StartOverlay/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "CLICK TO START"
+
+[node name="GameOverOverlay" type="ColorRect" parent="UI"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.8)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/GameOverOverlay"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="GameOverLabel" type="Label" parent="UI/GameOverOverlay/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Game Over"
+horizontal_alignment = 1
+
+[node name="FinalScoreLabel" type="Label" parent="UI/GameOverOverlay/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "Final Score: 0"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="UI/GameOverOverlay/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "RESTART"
+
+[connection signal="pressed" from="UI/StartOverlay/VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="UI/GameOverOverlay/VBoxContainer/RestartButton" to="." method="_on_restart_button_pressed"]
