@@ -1,6 +1,7 @@
-[gd_scene load_steps=17 format=3 uid="uid://dqm3yxvb8akn7"]
+[gd_scene load_steps=18 format=3 uid="uid://dqm3yxvb8akn7"]
 
 [ext_resource type="Script" uid="uid://ceraylqfyckrh" path="res://scripts/player.gd" id="1"]
+[ext_resource type="Script" uid="uid://mk7fohlex0m2" path="res://scripts/components/powerup_component.gd" id="1_powerup"]
 [ext_resource type="Texture2D" uid="uid://b8wrqwvo6llly" path="res://assets/sprites/astronaut/AstroStay.png" id="2"]
 [ext_resource type="Texture2D" uid="uid://td524w5w8c3s" path="res://assets/sprites/astronaut/AstroPreJump1.png" id="3"]
 [ext_resource type="Texture2D" uid="uid://uumgy4vjuxq6" path="res://assets/sprites/astronaut/AstroPreJump2.png" id="4"]
@@ -208,9 +209,11 @@ libraries = {
 
 [node name="JumpArrow" type="Node2D" parent="."]
 visible = false
-position = Vector2(0, 0)
 
 [node name="HUDArc" type="Polygon2D" parent="JumpArrow"]
 color = Color(1, 1, 1, 0.85)
 antialiased = true
 polygon = PackedVector2Array(-40, -68, -30, -76, -15, -83, 0, -90, 15, -83, 30, -76, 40, -68, 35, -66, 25, -73, 15, -78, 0, -82, -15, -78, -25, -73, -35, -66)
+
+[node name="PowerupComponent" type="Node" parent="."]
+script = ExtResource("1_powerup")

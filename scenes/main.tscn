@@ -1,19 +1,24 @@
-[gd_scene load_steps=10 format=3 uid="uid://b7v8xax0y102a"]
+[gd_scene load_steps=17 format=3 uid="uid://b7v8xax0y102a"]
 
 [ext_resource type="PackedScene" uid="uid://dqm3yxvb8akn7" path="res://scenes/player.tscn" id="1_main_player"]
 [ext_resource type="PackedScene" uid="uid://c8m2n3o4p5q6r" path="res://scenes/platform.tscn" id="2_main_platform"]
-[ext_resource type="Script" uid="uid://binwds573pxg" path="res://scripts/platform_spawner.gd" id="3_main_spawner"]
+[ext_resource type="Script" path="res://scripts/platform_spawner.gd" id="3_main_spawner"]
 [ext_resource type="Script" uid="uid://beciibgy155yl" path="res://scripts/game_manager.gd" id="4_main_manager"]
 [ext_resource type="Script" uid="uid://cfcd6eh10luyr" path="res://scripts/camera_scroller.gd" id="5_camera_scroller"]
+[ext_resource type="Script" path="res://scripts/difficulty_manager.gd" id="6_difficulty"]
 [ext_resource type="Texture2D" uid="uid://bvx8xay001a2b" path="res://assets/backgrounds/night-beach-sky.png" id="6_bg_sky"]
 [ext_resource type="Texture2D" uid="uid://dwx8xay001a2d" path="res://assets/backgrounds/night-beach-cloud-01.png" id="7_bg_cloud"]
 [ext_resource type="Texture2D" uid="uid://cvx8xay001a2c" path="res://assets/backgrounds/night-beach-mountain-01.png" id="8_bg_mountain"]
+[ext_resource type="PackedScene" uid="uid://bounce_platform_001" path="res://scenes/platform_bounce.tscn" id="9_bounce"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_death_zone"]
 size = Vector2(2000, 100)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("4_main_manager")
+
+[node name="DifficultyManager" type="Node" parent="."]
+script = ExtResource("6_difficulty")
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
 scroll_ignore_camera_zoom = true
@@ -59,7 +64,9 @@ speed = 0.0
 [node name="PlatformSpawner" type="Node2D" parent="."]
 position = Vector2(360, 360)
 script = ExtResource("3_main_spawner")
-platform_scenes = Array[PackedScene]([ExtResource("2_main_platform")])
+enable_difficulty_scaling = true
+normal_platform_scene = ExtResource("2_main_platform")
+bounce_platform_scene = ExtResource("9_bounce")
 
 [node name="DeathZone" type="Area2D" parent="."]
 position = Vector2(360, 1500)
@@ -88,6 +95,34 @@ offset_bottom = 100.0
 theme_override_font_sizes/font_size = 20
 text = "Best: 0"
 horizontal_alignment = 1
+
+[node name="PowerupNotification" type="PanelContainer" parent="UI"]
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 120.0
+offset_right = 200.0
+offset_bottom = 220.0
+grow_horizontal = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/PowerupNotification"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PowerupName" type="Label" parent="UI/PowerupNotification/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "POWERUP NAME"
+horizontal_alignment = 1
+
+[node name="PowerupDescription" type="Label" parent="UI/PowerupNotification/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Description here"
+horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="StartOverlay" type="ColorRect" parent="UI"]
 anchors_preset = 15
