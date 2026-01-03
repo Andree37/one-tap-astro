@@ -133,6 +133,21 @@ func _physics_process(delta):
 
 	move_and_slide()
 
+	# Check for wall collisions and bounce
+	for i in range(get_slide_collision_count()):
+		var collision = get_slide_collision(i)
+		var collider = collision.get_collider()
+
+		if collider is StaticBody2D and (collider.name == "LeftWall" or collider.name == "RightWall"):
+			var normal = collision.get_normal()
+
+			var push_force = 500.0  # Adjust this value for stronger/weaker push
+			velocity.x = normal.x * push_force
+
+			velocity.y = velocity.y * 0.9
+
+			print("PLAYER: Bounced off ", collider.name, " with push velocity: ", velocity.x)
+
 func play_animation(anim_name: String):
 	if current_animation != anim_name:
 		current_animation = anim_name
