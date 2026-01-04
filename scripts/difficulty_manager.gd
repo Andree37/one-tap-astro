@@ -73,7 +73,7 @@ func update_difficulty() -> void:
 	)
 
 	special_platform_chance = min(0.1 + (current_difficulty_level * 0.02), 0.3)
-	powerup_platform_chance = min(0.8 + (current_difficulty_level * 0.03), 0.95)
+	powerup_platform_chance = min(0.1 + (current_difficulty_level * 0.02), 0.3)
 
 	speed_increased.emit(current_platform_speed)
 
