@@ -42,7 +42,11 @@ func transition_to(target_state_name: String, data: Dictionary = {}) -> void:
 		push_error("State '%s' does not exist!" % target_state_name)
 		return
 
-	var previous_state_name = current_state.name if current_state else "null"
+	var previous_state_name: String
+	if current_state:
+		previous_state_name = current_state.name
+	else:
+		previous_state_name = "null"
 
 	if current_state:
 		current_state.exit()
@@ -53,7 +57,10 @@ func transition_to(target_state_name: String, data: Dictionary = {}) -> void:
 	state_changed.emit(previous_state_name, target_state_name)
 
 func get_current_state_name() -> String:
-	return current_state.name if current_state else ""
+	if current_state:
+		return current_state.name
+	else:
+		return ""
 
 func is_in_state(state_name: String) -> bool:
 	return current_state and current_state.name == state_name

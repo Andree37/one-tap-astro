@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://floating_xp_text_001"]
+
+[ext_resource type="Script" path="res://scripts/ui/floating_xp_text.gd" id="1_floating_xp"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_xp"]
+font_size = 32
+font_color = Color(1, 1, 0, 1)
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
+
+[node name="FloatingXPText" type="Label"]
+script = ExtResource("1_floating_xp")
+offset_right = 100.0
+offset_bottom = 40.0
+text = "+1"
+label_settings = SubResource("LabelSettings_xp")
+horizontal_alignment = 1
+vertical_alignment = 1

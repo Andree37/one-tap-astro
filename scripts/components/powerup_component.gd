@@ -9,7 +9,10 @@ enum PowerupType {
 	JUMP_BOOST,
 	DOUBLE_JUMP,
 	ROCKET,
-	WALL
+	WALL,
+	SPEED_BOOST,
+	MAGNET_SHIELD,
+	XP_MULTIPLIER
 }
 
 var active_powerups: Dictionary = {}
@@ -37,6 +40,15 @@ func collect_powerup(type: PowerupType, duration: float = 10.0) -> void:
 		PowerupType.WALL:
 			print("POWERUP: Activating WALL")
 			activate_wall(duration)
+		PowerupType.SPEED_BOOST:
+			print("POWERUP: Activating SPEED_BOOST")
+			activate_speed_boost(duration)
+		PowerupType.MAGNET_SHIELD:
+			print("POWERUP: Activating MAGNET_SHIELD")
+			activate_magnet_shield(duration)
+		PowerupType.XP_MULTIPLIER:
+			print("POWERUP: Activating XP_MULTIPLIER")
+			activate_xp_multiplier(duration)
 
 	powerup_collected.emit(PowerupType.keys()[type])
 	print("POWERUP: Emitted powerup_collected signal")
@@ -49,7 +61,7 @@ func activate_jump_boost(_duration: float) -> void:
 	active_powerups["jump_boost_original"] = player.JUMP_FORCE
 	active_powerups["jump_boost_uses"] = 1
 	player.JUMP_FORCE *= 1.5
-	print("POWERUP: Jump boost activated - 1 use available, force: ", player.JUMP_FORCE)
+	print("POWERUP: Jump boost activated - 1 use available")
 
 func activate_double_jump(_duration: float) -> void:
 	if active_powerups.has("double_jump"):
@@ -93,7 +105,6 @@ func activate_rocket() -> void:
 
 		call_deferred("spawn_landing_platform", landing_pos)
 
-		# Spawn a few extra platforms after rocket to ensure player has something to jump to
 		get_tree().create_timer(0.3).timeout.connect(func():
 			for i in range(3):
 				spawner.spawn_platform()
@@ -108,8 +119,6 @@ func spawn_landing_platform(position: Vector2) -> void:
 
 	var main_scene = player.get_tree().get_root().get_node("Main")
 	main_scene.add_child(platform)
-	print("POWERUP: Spawned landing platform at ", position)
-
 	get_tree().create_timer(5.0).timeout.connect(func():
 		if is_instance_valid(platform):
 			platform.queue_free()
@@ -194,7 +203,7 @@ func spawn_walls() -> void:
 	active_powerups["left_wall_node"] = left_wall
 	active_powerups["right_wall_node"] = right_wall
 
-	print("POWERUP: Walls spawned at x positions: ", left_wall.global_position.x, " and ", right_wall.global_position.x)
+
 
 func remove_walls() -> void:
 	if active_powerups.has("left_wall_node"):
@@ -209,7 +218,6 @@ func remove_walls() -> void:
 			right_wall.queue_free()
 		active_powerups.erase("right_wall_node")
 
-	print("POWERUP: Walls removed")
 
 func consume_jump_boost() -> void:
 	if not active_powerups.has("jump_boost_uses"):
@@ -219,7 +227,6 @@ func consume_jump_boost() -> void:
 	uses -= 1
 
 	if uses <= 0:
-		# Restore original jump force
 		if active_powerups.has("jump_boost_original"):
 			player.JUMP_FORCE = active_powerups["jump_boost_original"]
 			active_powerups.erase("jump_boost_original")
@@ -237,7 +244,6 @@ func consume_double_jump() -> void:
 	uses -= 1
 
 	if uses <= 0:
-		# Disable double jump
 		player.can_double_jump = false
 		player.double_jump_available = false
 		active_powerups.erase("double_jump_uses")
@@ -249,6 +255,9 @@ func consume_double_jump() -> void:
 func has_powerup(powerup_name: String) -> bool:
 	return active_powerups.has(powerup_name)
 
+func is_magnet_shield_active() -> bool:
+	return active_powerups.has("magnet_shield_active")
+
 func clear_all_powerups() -> void:
 	for powerup in active_powerups.values():
 		if powerup is SceneTreeTimer:
@@ -257,3 +266,49 @@ func clear_all_powerups() -> void:
 
 func get_active_powerups() -> Array:
 	return active_powerups.keys()
+
+func activate_speed_boost(duration: float) -> void:
+	print("POWERUP: Speed boost activated for ", duration, " seconds")
+
+func activate_magnet_shield(duration: float) -> void:
+	if active_powerups.has("magnet_shield"):
+		if active_powerups["magnet_shield"] is SceneTreeTimer:
+			active_powerups["magnet_shield"].timeout.disconnect(_deactivate_magnet_shield)
+		active_powerups.erase("magnet_shield")
+
+	active_powerups["magnet_shield_active"] = true
+	print("POWERUP: Magnet shield activated for ", duration, " seconds")
+
+	var timer = get_tree().create_timer(duration)
+	active_powerups["magnet_shield"] = timer
+	timer.timeout.connect(_deactivate_magnet_shield)
+
+func _deactivate_magnet_shield() -> void:
+	active_powerups.erase("magnet_shield_active")
+	active_powerups.erase("magnet_shield")
+	print("POWERUP: Magnet shield expired")
+	powerup_expired.emit("MAGNET_SHIELD")
+
+func activate_xp_multiplier(duration: float) -> void:
+	if active_powerups.has("xp_multiplier"):
+		if active_powerups["xp_multiplier"] is SceneTreeTimer:
+			active_powerups["xp_multiplier"].timeout.disconnect(_deactivate_xp_multiplier)
+		active_powerups.erase("xp_multiplier")
+
+	active_powerups["xp_multiplier_active"] = 2.0
+	print("POWERUP: XP multiplier (2x) activated for ", duration, " seconds")
+
+	var timer = get_tree().create_timer(duration)
+	active_powerups["xp_multiplier"] = timer
+	timer.timeout.connect(_deactivate_xp_multiplier)
+
+func _deactivate_xp_multiplier() -> void:
+	active_powerups.erase("xp_multiplier_active")
+	active_powerups.erase("xp_multiplier")
+	print("POWERUP: XP multiplier expired")
+	powerup_expired.emit("XP_MULTIPLIER")
+
+func get_xp_multiplier() -> float:
+	if active_powerups.has("xp_multiplier_active"):
+		return active_powerups["xp_multiplier_active"]
+	return 1.0

@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://b7v8xax0y102a"]
+[gd_scene load_steps=21 format=3 uid="uid://b7v8xax0y102a"]
 
 [ext_resource type="PackedScene" uid="uid://dqm3yxvb8akn7" path="res://scenes/player.tscn" id="1_main_player"]
 [ext_resource type="PackedScene" uid="uid://c8m2n3o4p5q6r" path="res://scenes/platform.tscn" id="2_main_platform"]
@@ -6,19 +6,33 @@
 [ext_resource type="Script" uid="uid://beciibgy155yl" path="res://scripts/game_manager.gd" id="4_main_manager"]
 [ext_resource type="Script" uid="uid://cfcd6eh10luyr" path="res://scripts/camera_scroller.gd" id="5_camera_scroller"]
 [ext_resource type="Script" path="res://scripts/difficulty_manager.gd" id="6_difficulty"]
+[ext_resource type="Script" path="res://scripts/xp_manager.gd" id="6_xp_manager"]
+[ext_resource type="Script" path="res://scripts/enemy_spawner.gd" id="6_enemy_spawner"]
 [ext_resource type="Texture2D" uid="uid://bvx8xay001a2b" path="res://assets/backgrounds/night-beach-sky.png" id="6_bg_sky"]
 [ext_resource type="Texture2D" uid="uid://dwx8xay001a2d" path="res://assets/backgrounds/night-beach-cloud-01.png" id="7_bg_cloud"]
 [ext_resource type="Texture2D" uid="uid://cvx8xay001a2c" path="res://assets/backgrounds/night-beach-mountain-01.png" id="8_bg_mountain"]
 [ext_resource type="PackedScene" uid="uid://bounce_platform_001" path="res://scenes/platform_bounce.tscn" id="9_bounce"]
+[ext_resource type="Script" path="res://scripts/danger_zone.gd" id="10_danger_zone"]
+[ext_resource type="Script" path="res://scripts/starting_platform.gd" id="11_starting_platform"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_death_zone"]
-size = Vector2(2000, 100)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_danger_zone"]
+size = Vector2(720, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(100, 5000)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("4_main_manager")
 
 [node name="DifficultyManager" type="Node" parent="."]
 script = ExtResource("6_difficulty")
+
+[node name="XPManager" type="Node" parent="."]
+script = ExtResource("6_xp_manager")
+
+[node name="EnemySpawner" type="Node2D" parent="."]
+position = Vector2(360, 360)
+script = ExtResource("6_enemy_spawner")
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
 scroll_ignore_camera_zoom = true
@@ -59,6 +73,7 @@ position = Vector2(360, 711)
 
 [node name="StartingPlatform" parent="." instance=ExtResource("2_main_platform")]
 position = Vector2(360, 811)
+script = ExtResource("11_starting_platform")
 speed = 0.0
 
 [node name="PlatformSpawner" type="Node2D" parent="."]
@@ -68,12 +83,43 @@ enable_difficulty_scaling = true
 normal_platform_scene = ExtResource("2_main_platform")
 bounce_platform_scene = ExtResource("9_bounce")
 
-[node name="DeathZone" type="Area2D" parent="."]
-position = Vector2(360, 1500)
-collision_layer = 4
+[node name="DangerZone" type="Area2D" parent="."]
+position = Vector2(360, 950)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("10_danger_zone")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="DeathZone"]
-shape = SubResource("RectangleShape2D_death_zone")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DangerZone"]
+shape = SubResource("RectangleShape2D_danger_zone")
+
+[node name="FireVisual" type="ColorRect" parent="DangerZone"]
+offset_left = -360.0
+offset_right = 360.0
+offset_bottom = 100.0
+color = Color(1, 0.3, 0, 0.6)
+
+[node name="FireParticles" type="Line2D" parent="DangerZone"]
+points = PackedVector2Array(-360, 0, -300, -20, -240, -10, -180, -25, -120, -15, -60, -30, 0, -20, 60, -30, 120, -15, 180, -25, 240, -10, 300, -20, 360, 0)
+width = 8.0
+default_color = Color(1, 0.5, 0, 1)
+
+[node name="LeftWallDeath" type="Area2D" parent="."]
+position = Vector2(-100, 0)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("10_danger_zone")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftWallDeath"]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="RightWallDeath" type="Area2D" parent="."]
+position = Vector2(820, 0)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("10_danger_zone")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RightWallDeath"]
+shape = SubResource("RectangleShape2D_wall")
 
 [node name="UI" type="CanvasLayer" parent="."]
 process_mode = 3
@@ -95,6 +141,32 @@ offset_bottom = 100.0
 theme_override_font_sizes/font_size = 20
 text = "Best: 0"
 horizontal_alignment = 1
+
+[node name="XPLabel" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 110.0
+offset_right = 200.0
+offset_bottom = 140.0
+theme_override_font_sizes/font_size = 20
+text = "Level: 0 | XP: 0/10"
+horizontal_alignment = 1
+
+[node name="TimerLabel" type="Label" parent="UI"]
+offset_left = 520.0
+offset_top = 20.0
+offset_right = 700.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 32
+text = "Time: 0:00"
+horizontal_alignment = 2
+
+[node name="XPBar" type="ProgressBar" parent="UI"]
+offset_left = 210.0
+offset_top = 30.0
+offset_right = 510.0
+offset_bottom = 50.0
+max_value = 10.0
+show_percentage = false
 
 [node name="PowerupNotification" type="PanelContainer" parent="UI"]
 visible = false

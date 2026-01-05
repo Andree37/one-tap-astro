@@ -3,23 +3,24 @@ extends Node2D
 class_name PlatformSpawner
 
 @export_group("Spawn Timing")
-@export var min_spawn_time: float = 0.8
-@export var max_spawn_time: float = 1.5
-@export var initial_spawn_delay: float = 0.1
+@export var min_spawn_time: float = 0.3
+@export var max_spawn_time: float = 0.6
+@export var initial_spawn_delay: float = 0.01
 
 @export_group("Platform Movement")
 @export var platform_speed: float = 80.0
 @export var platform_lifetime: float = 10.0
 
 @export_group("Spawn Position")
-@export var spawn_distance_ahead: float = 300.0
+@export var spawn_distance_ahead: float = 400.0
 @export var spawn_x_range: float = 240.0
 
 @export_group("Platform Spacing")
-@export var min_horizontal_gap: float = 50.0
-@export var min_vertical_gap: float = 200.0
-@export var player_horizontal_clearance: float = 100.0
-@export var player_vertical_clearance: float = 150.0
+@export var min_horizontal_gap: float = 30.0
+@export var min_vertical_gap: float = 120.0
+@export var max_vertical_gap: float = 220.0
+@export var player_horizontal_clearance: float = 50.0
+@export var player_vertical_clearance: float = 80.0
 
 @export_group("Platform Scenes")
 @export var normal_platform_scene: PackedScene
@@ -72,6 +73,7 @@ func update_spawn_time() -> void:
 func spawn_platform() -> void:
 	var spawn_pos = _find_valid_spawn_position()
 	if spawn_pos == Vector2.ZERO:
+		print("SPAWNER: Failed to find valid spawn position!")
 		return
 
 	var platform_scene = _choose_platform_scene()
@@ -90,15 +92,6 @@ func spawn_platform() -> void:
 		platform.speed = current_speed
 
 	active_platforms.append(platform)
-	_setup_platform_lifetime(platform)
-
-	if enable_difficulty_scaling:
-		print("SPAWNER: Checking if should spawn powerup...")
-		if difficulty_manager.should_spawn_powerup_platform():
-			print("SPAWNER: YES, spawning powerup on platform!")
-			spawn_powerup_on_platform(platform)
-		else:
-			print("SPAWNER: NO powerup this time")
 
 func _choose_platform_scene() -> PackedScene:
 	return normal_platform_scene
@@ -135,20 +128,32 @@ func _find_valid_spawn_position() -> Vector2:
 	const PLATFORM_WIDTH: float = 152.0
 	const PLATFORM_HEIGHT: float = 54.0
 
-	var spawn_y = camera.global_position.y - spawn_distance_ahead
+	var spawn_y_target = camera.global_position.y - spawn_distance_ahead
+
+	if player:
+		spawn_y_target = min(spawn_y_target, player.global_position.y - spawn_distance_ahead)
+
+	if active_platforms.size() == 0:
+		var initial_screen_center_x = camera.global_position.x
+		var random_x_offset = randf_range(-spawn_x_range, spawn_x_range)
+		return Vector2(initial_screen_center_x + random_x_offset, spawn_y_target)
+
+	var topmost_platform_y = INF
+	for platform in active_platforms:
+		if is_instance_valid(platform) and platform.global_position.y < topmost_platform_y:
+			topmost_platform_y = platform.global_position.y
+
+	var target_y = min(topmost_platform_y, spawn_y_target)
+
 	var screen_center_x = camera.global_position.x
 
 	for attempt in range(MAX_ATTEMPTS):
+		var spawn_y = target_y - randf_range(min_vertical_gap, max_vertical_gap)
 		var random_x_offset = randf_range(-spawn_x_range, spawn_x_range)
 		var test_pos = Vector2(screen_center_x + random_x_offset, spawn_y)
 
-		var horizontal_dist = abs(test_pos.x - player.global_position.x)
-		var vertical_dist = abs(test_pos.y - player.global_position.y)
-
-		if horizontal_dist < player_horizontal_clearance and vertical_dist < player_vertical_clearance:
-			continue
-
 		var valid = true
+
 		for existing_platform in active_platforms:
 			if not is_instance_valid(existing_platform):
 				continue
@@ -168,12 +173,6 @@ func _find_valid_spawn_position() -> Vector2:
 			return test_pos
 
 	return Vector2.ZERO
-
-func _setup_platform_lifetime(platform: Node2D) -> void:
-	var timer = get_tree().create_timer(platform_lifetime)
-	timer.timeout.connect(func():
-		_destroy_platform(platform)
-	)
 
 func _destroy_platform(platform: Node2D) -> void:
 	if not is_instance_valid(platform):
@@ -197,6 +196,8 @@ func clear_all_platforms() -> void:
 
 func _on_game_started() -> void:
 	start_spawning()
+	for i in range(3):
+		spawn_platform()
 
 func _on_game_over(_final_score: int) -> void:
 	stop_spawning()

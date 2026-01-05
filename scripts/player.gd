@@ -1,11 +1,10 @@
 extends CharacterBody2D
 
-# Physics
 const GRAVITY = 1200.0
 var JUMP_FORCE = 1000.0
-const MIN_HORIZONTAL_RATIO = 0.05  # Minimum horizontal movement (tap)
-const MAX_HORIZONTAL_RATIO = 0.3   # Maximum horizontal movement (full charge)
-const FALL_MULTIPLIER = 2.5  # Much faster fall for snappy feel
+const MIN_HORIZONTAL_RATIO = 0.05
+const MAX_HORIZONTAL_RATIO = 0.3
+const FALL_MULTIPLIER = 2.5
 
 var charge_time = 0.0
 var max_charge_time = 1.0
@@ -20,6 +19,8 @@ var current_animation = ""
 var previous_velocity = Vector2.ZERO
 var highest_position = 0.0
 var last_score_position = 0.0
+var highest_position_ever = 0.0
+var platform_score_at_last_xp = 0
 
 var can_double_jump = false
 var double_jump_available = false
@@ -32,16 +33,20 @@ signal score_changed(score)
 signal died(final_score)
 
 var game_active = false
+var starting_position_y: float = 0.0
 
 func _ready():
 	can_jump = false
 	velocity = Vector2.ZERO
+	starting_position_y = global_position.y
 	highest_position = global_position.y
 	last_score_position = global_position.y
+	highest_position_ever = global_position.y
+	platform_score_at_last_xp = 0
 	floor_stop_on_slope = false
 	floor_constant_speed = true
 	floor_snap_length = 10.0
-	floor_max_angle = 0.785398  # 45 degrees
+	floor_max_angle = 0.785398
 
 func _physics_process(delta):
 	if is_dead or not game_active:
@@ -49,16 +54,21 @@ func _physics_process(delta):
 
 	previous_velocity = velocity
 
+	_apply_enemy_forces()
+
 	if global_position.y < highest_position:
 		highest_position = global_position.y
 
-		var distance_climbed = last_score_position - highest_position
+	if global_position.y < highest_position_ever:
+		highest_position_ever = global_position.y
+
+		var distance_climbed = last_score_position - highest_position_ever
 		if distance_climbed >= 50.0:
 			var points_to_add = int(distance_climbed / 50.0)
 			print("PLAYER: Adding ", points_to_add, " points. Distance climbed: ", distance_climbed)
 			for i in range(points_to_add):
 				add_score()
-			last_score_position = highest_position
+			last_score_position = highest_position_ever
 
 	if not is_on_floor():
 		if velocity.y > 0:
@@ -92,14 +102,12 @@ func _physics_process(delta):
 
 	was_on_floor = on_floor
 
-	# Jump charging (only if game is active)
 	if game_active:
 		if Input.is_action_pressed("jump") and can_jump and not is_charging:
 			is_charging = true
 			charge_time = 0.0
 			if animation_player:
 				play_animation("crouch")
-			# Show arc indicator
 			if jump_arrow:
 				jump_arrow.visible = true
 
@@ -133,7 +141,6 @@ func _physics_process(delta):
 
 	move_and_slide()
 
-	# Check for wall collisions and bounce
 	for i in range(get_slide_collision_count()):
 		var collision = get_slide_collision(i)
 		var collider = collision.get_collider()
@@ -171,7 +178,6 @@ func do_jump():
 	velocity = Vector2(horizontal, vertical)
 	can_jump = false
 
-	# Consume jump boost if active
 	var powerup_component = get_node("PowerupComponent")
 	if powerup_component:
 		powerup_component.consume_jump_boost()
@@ -201,7 +207,6 @@ func do_double_jump():
 	double_jump_available = false
 	print("PLAYER: Double jumping with direction!")
 
-	# Consume double jump powerup
 	var powerup_component = get_node("PowerupComponent")
 	if powerup_component:
 		powerup_component.consume_double_jump()
@@ -221,7 +226,6 @@ func add_score():
 	if current_score > SaveGame.get_highscore():
 		SaveGame.set_highscore(current_score)
 
-	# Play sound
 	if audio_player:
 		var point_sound = load("res://assets/audio/points.wav")
 		if point_sound:
@@ -235,6 +239,7 @@ func die():
 		return
 
 	is_dead = true
+	highest_position_ever = global_position.y
 	highest_position = global_position.y
 	last_score_position = global_position.y
 
@@ -251,3 +256,14 @@ func die():
 
 	await get_tree().create_timer(0.5).timeout
 	died.emit(current_score)
+
+func _apply_enemy_forces() -> void:
+	var enemies = get_tree().get_nodes_in_group("enemies")
+	var total_force = Vector2.ZERO
+
+	for enemy in enemies:
+		if enemy.has_method("get_magnet_force"):
+			total_force += enemy.get_magnet_force()
+
+	if total_force.length() > 0:
+		velocity += total_force * get_physics_process_delta_time()
