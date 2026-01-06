@@ -72,9 +72,10 @@ func start_game():
 	player.is_dead = false
 	player.can_jump = true
 	player.game_active = true
-	player.highest_position = player.global_position.y
-	player.last_score_position = player.global_position.y
-	player.highest_position_ever = player.global_position.y
+	if camera:
+		player.highest_camera_position = camera.global_position.y
+		player.last_score_camera_position = camera.global_position.y
+		player.highest_camera_position_ever = camera.global_position.y
 	if player.animation_player:
 		player.animation_player.play("RESET")
 		player.animation_player.play("idle")

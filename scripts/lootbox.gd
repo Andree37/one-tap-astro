@@ -35,13 +35,11 @@ func _is_click_on_lootbox(click_position: Vector2) -> bool:
 	if not camera:
 		return false
 
-	# Convert screen position to world position
 	var viewport_size = get_viewport_rect().size
 	var screen_center = viewport_size / 2.0
 	var offset_from_center = click_position - screen_center
 	var world_click_pos = camera.global_position + (offset_from_center / camera.zoom)
 
-	# Check if click is within lootbox bounds (80x80 centered on lootbox)
 	var lootbox_size = Vector2(80, 80)
 	var lootbox_rect = Rect2(global_position - lootbox_size / 2.0, lootbox_size)
 

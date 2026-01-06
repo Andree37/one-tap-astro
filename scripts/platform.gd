@@ -55,7 +55,7 @@ func _on_perfect_zone_entered(body: Node2D) -> void:
 
 func _show_perfect_landing_effect() -> void:
 	var original_modulate = modulate
-	modulate = Color(0.0, 1.0, 0.0, 1.0)  # Green color for perfect landing
+	modulate = Color(0.0, 1.0, 0.0, 1.0)
 
 	var tween = create_tween()
 	tween.tween_property(self, "modulate", original_modulate, 0.3)
@@ -81,44 +81,44 @@ func _check_landing(body: Node2D) -> void:
 	if body.velocity.y < 0:
 		return
 
-	var platform_score_height = int((body.starting_position_y - global_position.y) / 50.0)
-	var last_xp_score = body.platform_score_at_last_xp
+	var current_score = body.current_score
+	var last_xp_score = body.last_score_with_xp
 
-	if platform_score_height <= last_xp_score:
-		print("PLATFORM: No XP - platform at score ", platform_score_height, " not higher than last XP score ", last_xp_score)
+	if current_score <= last_xp_score:
+		print("PLATFORM: No XP - current score ", current_score, " not higher than last XP score ", last_xp_score)
 		player_landed = true
 		return
 
 	player_landed = true
 
 	if perfect_landing_zone_active:
-		print("PLATFORM: PERFECT LANDING! Platform score: ", platform_score_height, " (last XP at: ", last_xp_score, ")")
+		print("PLATFORM: PERFECT LANDING! Score: ", current_score, " (last XP at: ", last_xp_score, ")")
 		if xp_manager:
 			xp_manager.add_perfect_landing_xp()
-			body.platform_score_at_last_xp = platform_score_height
-			_spawn_floating_xp_text(5)
+			body.last_score_with_xp = current_score
+			_spawn_floating_xp_text(3, true)
 		else:
 			print("PLATFORM: XPManager is null, cannot add XP")
 		_show_perfect_landing_effect()
 	else:
-		print("PLATFORM: Normal landing - adding 1 XP. Platform score: ", platform_score_height, " (last XP at: ", last_xp_score, ")")
+		print("PLATFORM: Normal landing - adding 1 XP. Score: ", current_score, " (last XP at: ", last_xp_score, ")")
 		if xp_manager:
 			xp_manager.add_normal_landing_xp()
-			body.platform_score_at_last_xp = platform_score_height
+			body.last_score_with_xp = current_score
 			_spawn_floating_xp_text(1)
 		else:
 			print("PLATFORM: XPManager is null, cannot add XP")
 
 	perfect_landing_zone_active = false
 
-func _spawn_floating_xp_text(amount: int) -> void:
+func _spawn_floating_xp_text(amount: int, is_perfect: bool = false) -> void:
 	if not floating_xp_text_scene:
 		return
 
 	var floating_text = floating_xp_text_scene.instantiate()
 	get_parent().add_child(floating_text)
 	floating_text.global_position = global_position + Vector2(0, -40)
-	floating_text.set_xp_amount(amount)
+	floating_text.set_xp_amount(amount, is_perfect)
 
 func _on_body_exited(body: Node2D) -> void:
 	if body.is_in_group("player"):

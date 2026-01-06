@@ -98,9 +98,9 @@ func activate_rocket() -> void:
 	tween.tween_property(camera, "position:y", target_y, 1.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 	tween.chain().tween_callback(func():
-		player.highest_position = player.global_position.y
-		player.highest_position_ever = player.global_position.y
-		player.last_score_position = player.global_position.y
+		player.highest_camera_position = camera.global_position.y
+		player.highest_camera_position_ever = camera.global_position.y
+		player.last_score_camera_position = camera.global_position.y
 
 		print("POWERUP: Rocket tween complete, adding ", boost_meters, " points")
 		for i in range(boost_meters):

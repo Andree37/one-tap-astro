@@ -15,6 +15,7 @@ enum EnemyType {
 @export var move_speed: float = 50.0
 @export var bounce_force: float = 600.0
 @export var is_boss: bool = false
+@export var floating_xp_text_scene: PackedScene
 
 var player: CharacterBody2D = null
 var movement_direction: Vector2 = Vector2.ZERO
@@ -104,6 +105,23 @@ func _flash_damage() -> void:
 		var tween = create_tween()
 		tween.tween_property(sprite, "modulate", original_modulate, 0.2)
 
+func _show_kill_effect() -> void:
+	if sprite:
+		var original_modulate = sprite.modulate
+		modulate = Color(0.0, 1.0, 0.0, 1.0)
+
+		var tween = create_tween()
+		tween.tween_property(sprite, "modulate", original_modulate, 0.3)
+
+func _spawn_floating_xp_text(amount: int) -> void:
+	if not floating_xp_text_scene:
+		return
+
+	var floating_text = floating_xp_text_scene.instantiate()
+	get_parent().add_child(floating_text)
+	floating_text.global_position = global_position + Vector2(0, -60)
+	floating_text.set_xp_amount(amount, false)
+
 func die() -> void:
 	print("ENEMY: Died! Boss: ", is_boss)
 	enemy_died.emit(self)
@@ -167,11 +185,14 @@ func _on_head_area_entered(body: Node2D) -> void:
 			if xp_manager and xp_manager.has_method("add_xp"):
 				if is_boss:
 					xp_manager.add_xp(20)
+					_spawn_floating_xp_text(20)
 				else:
 					xp_manager.add_xp(5)
+					_spawn_floating_xp_text(5)
 
 			EventBus.play_sound.emit("bounce")
 
+			_show_kill_effect()
 			die()
 		else:
 			print("ENEMY: Player hit head but not falling (velocity.y <= 0)")

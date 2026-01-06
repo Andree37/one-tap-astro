@@ -17,10 +17,10 @@ var current_score = 0
 var was_on_floor = false
 var current_animation = ""
 var previous_velocity = Vector2.ZERO
-var highest_position = 0.0
-var last_score_position = 0.0
-var highest_position_ever = 0.0
-var platform_score_at_last_xp = 0
+var highest_camera_position = 0.0
+var last_score_camera_position = 0.0
+var highest_camera_position_ever = 0.0
+var last_score_with_xp = 0
 
 var can_double_jump = false
 var double_jump_available = false
@@ -39,10 +39,12 @@ func _ready():
 	can_jump = false
 	velocity = Vector2.ZERO
 	starting_position_y = global_position.y
-	highest_position = global_position.y
-	last_score_position = global_position.y
-	highest_position_ever = global_position.y
-	platform_score_at_last_xp = 0
+	var camera = get_viewport().get_camera_2d()
+	if camera:
+		highest_camera_position = camera.global_position.y
+		last_score_camera_position = camera.global_position.y
+		highest_camera_position_ever = camera.global_position.y
+	last_score_with_xp = 0
 	floor_stop_on_slope = false
 	floor_constant_speed = true
 	floor_snap_length = 10.0
@@ -53,20 +55,22 @@ func _physics_process(delta):
 		return
 
 	previous_velocity = velocity
+	var camera = get_viewport().get_camera_2d()
 
-	if global_position.y < highest_position:
-		highest_position = global_position.y
+	if camera:
+		if camera.global_position.y < highest_camera_position:
+			highest_camera_position = camera.global_position.y
 
-	if global_position.y < highest_position_ever:
-		highest_position_ever = global_position.y
+		if camera.global_position.y < highest_camera_position_ever:
+			highest_camera_position_ever = camera.global_position.y
 
-		var distance_climbed = last_score_position - highest_position_ever
-		if distance_climbed >= 50.0:
-			var points_to_add = int(distance_climbed / 50.0)
-			print("PLAYER: Adding ", points_to_add, " points. Distance climbed: ", distance_climbed)
-			for i in range(points_to_add):
-				add_score()
-			last_score_position = highest_position_ever
+			var distance_climbed = last_score_camera_position - highest_camera_position_ever
+			if distance_climbed >= 50.0:
+				var points_to_add = int(distance_climbed / 50.0)
+				print("PLAYER: Adding ", points_to_add, " points. Distance climbed: ", distance_climbed)
+				for i in range(points_to_add):
+					add_score()
+				last_score_camera_position = highest_camera_position_ever
 
 	if not is_on_floor():
 		if velocity.y > 0:
@@ -75,15 +79,15 @@ func _physics_process(delta):
 			velocity.y += GRAVITY * delta
 
 	if is_on_ceiling():
-		velocity.y = 100  # Push down immediately
+		velocity.y = 100
 
 	var on_floor = is_on_floor()
 
 	if on_floor:
 		can_jump = true
-		velocity.x = 0  # Stop horizontal movement
-		velocity.y = 0  # Stop vertical movement
-		rotation = 0  # Keep upright
+		velocity.x = 0
+		velocity.y = 0
+		rotation = 0
 
 		if can_double_jump:
 			double_jump_available = true
@@ -113,12 +117,11 @@ func _physics_process(delta):
 			velocity = Vector2.ZERO
 
 			var mouse_pos = get_viewport().get_mouse_position()
-			var camera = get_viewport().get_camera_2d()
 			var player_screen_pos = camera.global_position - global_position
 			var player_x = get_viewport().get_visible_rect().size.x / 2 - player_screen_pos.x
 
 			var mouse_offset = mouse_pos.x - player_x
-			var max_offset = 300.0  # Max distance from player for full angle
+			var max_offset = 300.0
 			var horizontal_ratio = clamp(mouse_offset / max_offset, -1.0, 1.0)
 
 			var max_rotation = deg_to_rad(45)
@@ -146,7 +149,7 @@ func _physics_process(delta):
 		if collider is StaticBody2D and (collider.name == "LeftWall" or collider.name == "RightWall"):
 			var normal = collision.get_normal()
 
-			var push_force = 500.0  # Adjust this value for stronger/weaker push
+			var push_force = 500.0
 			velocity.x = normal.x * push_force
 
 			velocity.y = velocity.y * 0.9
@@ -159,19 +162,21 @@ func play_animation(anim_name: String):
 		animation_player.play(anim_name)
 
 func do_jump():
-	var jump_power = JUMP_FORCE  # Constant jump power
+	var jump_power = JUMP_FORCE
 
 	var mouse_pos = get_viewport().get_mouse_position()
 	var camera = get_viewport().get_camera_2d()
+	if not camera:
+		return
 	var player_screen_pos = camera.global_position - global_position
 	var player_x = get_viewport().get_visible_rect().size.x / 2 - player_screen_pos.x
 	var mouse_offset = mouse_pos.x - player_x
-	var max_offset = 300.0  # Max distance from player for full angle
+	var max_offset = 300.0
 	var horizontal_ratio = clamp(mouse_offset / max_offset, -1.0, 1.0)
 
-	var angle_factor = abs(horizontal_ratio) * 0.5  # Scale to 0-0.5 range
+	var angle_factor = abs(horizontal_ratio) * 0.5
 	var horizontal = horizontal_ratio * jump_power * angle_factor
-	var vertical = -jump_power * (1.0 - angle_factor * 0.3)  # Mostly vertical
+	var vertical = -jump_power * (1.0 - angle_factor * 0.3)
 
 	velocity = Vector2(horizontal, vertical)
 	can_jump = false
@@ -191,6 +196,8 @@ func do_double_jump():
 
 	var mouse_pos = get_viewport().get_mouse_position()
 	var camera = get_viewport().get_camera_2d()
+	if not camera:
+		return
 	var player_screen_pos = camera.global_position - global_position
 	var player_x = get_viewport().get_visible_rect().size.x / 2 - player_screen_pos.x
 	var mouse_offset = mouse_pos.x - player_x
@@ -237,9 +244,11 @@ func die():
 		return
 
 	is_dead = true
-	highest_position_ever = global_position.y
-	highest_position = global_position.y
-	last_score_position = global_position.y
+	var camera = get_viewport().get_camera_2d()
+	if camera:
+		highest_camera_position_ever = camera.global_position.y
+		highest_camera_position = camera.global_position.y
+		last_score_camera_position = camera.global_position.y
 
 	if animation_player:
 		play_animation("dead")

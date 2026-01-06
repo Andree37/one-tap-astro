@@ -12,10 +12,13 @@ func _ready() -> void:
 	tween.tween_property(self, "modulate:a", 0.0, lifetime - fade_start_time).set_delay(fade_start_time)
 	tween.tween_callback(queue_free).set_delay(lifetime)
 
-func set_xp_amount(amount: int) -> void:
-	text = "+%d XP" % amount
-
-	if amount >= 5:
+func set_xp_amount(amount: int, is_perfect: bool = false) -> void:
+	if is_perfect:
+		text = "PERFECT\n+%d XP" % amount
 		label_settings.font_color = Color(0.0, 1.0, 0.0, 1.0)
 	else:
-		label_settings.font_color = Color(1.0, 1.0, 0.0, 1.0)
+		text = "+%d XP" % amount
+		if amount >= 5:
+			label_settings.font_color = Color(0.0, 1.0, 0.0, 1.0)
+		else:
+			label_settings.font_color = Color(1.0, 1.0, 0.0, 1.0)

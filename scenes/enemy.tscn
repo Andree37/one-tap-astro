@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://i468lya63mm0" path="res://scripts/enemy.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://d4f36l43bphk0" path="res://assets/sprites/enemies/alien-enemy.png" id="2"]
+[ext_resource type="PackedScene" uid="uid://floating_xp_text_001" path="res://scenes/ui/floating_xp_text.tscn" id="3_floating_xp"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_md0e3"]
 radius = 34.0
@@ -19,6 +20,7 @@ bg_color = Color(0.2, 0.8, 0.2, 1)
 [node name="Enemy" type="CharacterBody2D"]
 collision_layer = 4
 script = ExtResource("1")
+floating_xp_text_scene = ExtResource("3_floating_xp")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(-9.094947e-13, 2.2888184e-05)

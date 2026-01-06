@@ -43,8 +43,8 @@ func add_xp(amount: int) -> void:
 	_check_level_up()
 
 func add_perfect_landing_xp() -> void:
-	print("XP_MANAGER: Perfect landing! Adding 5 XP")
-	add_xp(5)
+	print("XP_MANAGER: Perfect landing! Adding 3 XP")
+	add_xp(3)
 
 func add_normal_landing_xp() -> void:
 	print("XP_MANAGER: Normal landing. Adding 1 XP")
