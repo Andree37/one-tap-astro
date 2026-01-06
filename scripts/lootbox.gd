@@ -24,35 +24,32 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if _is_visible_on_screen() and _is_click_on_lootbox(event.position):
+		if _is_click_on_lootbox(event.position):
 			open_lootbox()
 			get_viewport().set_input_as_handled()
 
-	if event.is_action_pressed("jump") and _is_visible_on_screen():
-		open_lootbox()
-		get_viewport().set_input_as_handled()
 
-func _is_visible_on_screen() -> bool:
-	var camera = get_viewport().get_camera_2d()
-	if not camera:
-		return false
-
-	var viewport_rect = get_viewport_rect()
-	var camera_pos = camera.get_screen_center_position()
-	var camera_zoom = camera.zoom
-
-	var half_screen = viewport_rect.size / (2.0 * camera_zoom)
-	var screen_rect = Rect2(camera_pos - half_screen, half_screen * 2)
-	return screen_rect.has_point(global_position)
 
 func _is_click_on_lootbox(click_position: Vector2) -> bool:
 	var camera = get_viewport().get_camera_2d()
 	if not camera:
 		return false
 
-	var world_pos = camera.get_screen_center_position() + (click_position - get_viewport_rect().size / 2) / camera.zoom
-	var lootbox_rect = Rect2(global_position - Vector2(40, 40), Vector2(80, 80))
-	return lootbox_rect.has_point(world_pos)
+	# Convert screen position to world position
+	var viewport_size = get_viewport_rect().size
+	var screen_center = viewport_size / 2.0
+	var offset_from_center = click_position - screen_center
+	var world_click_pos = camera.global_position + (offset_from_center / camera.zoom)
+
+	# Check if click is within lootbox bounds (80x80 centered on lootbox)
+	var lootbox_size = Vector2(80, 80)
+	var lootbox_rect = Rect2(global_position - lootbox_size / 2.0, lootbox_size)
+
+	var is_hit = lootbox_rect.has_point(world_click_pos)
+	if is_hit:
+		print("LOOTBOX: Clicked! Screen: ", click_position, " World: ", world_click_pos, " Lootbox: ", global_position)
+
+	return is_hit
 
 func open_lootbox() -> void:
 	if is_open:
@@ -91,13 +88,11 @@ func _show_powerup_selection() -> void:
 
 func _generate_powerup_options() -> Array:
 	var all_powerups = [
-		{"type": 0, "name": "Jump Boost", "description": "Next jump is 50% higher!"},
-		{"type": 1, "name": "Double Jump", "description": "Press jump in mid-air!"},
-		{"type": 2, "name": "Rocket", "description": "+100 meters instantly!"},
-		{"type": 3, "name": "Wall Guard", "description": "Side walls for 5 seconds!"},
-		{"type": 4, "name": "Speed Boost", "description": "Move faster for 10 seconds!"},
-		{"type": 5, "name": "Magnet Shield", "description": "Immune to enemy magnets!"},
-		{"type": 6, "name": "XP Multiplier", "description": "2x XP for 30 seconds!"},
+		{"type": 0, "name": "Jump Boost", "description": "Next 3 jumps are 50% higher!"},
+		{"type": 1, "name": "Double Jump", "description": "Press jump in mid-air! 3 uses!"},
+		# {"type": 2, "name": "Rocket", "description": "+100 meters instantly!"},  # DISABLED - has bugs
+		{"type": 3, "name": "Wall Guard", "description": "Side walls for 20 seconds!"},
+		{"type": 6, "name": "XP Multiplier", "description": "2x XP for 20 seconds!"},
 	]
 
 	all_powerups.shuffle()

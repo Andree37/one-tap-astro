@@ -11,6 +11,7 @@ var current_level: int = 0
 var levels_that_give_lootbox: Array[int] = []
 
 func _ready() -> void:
+	add_to_group("xp_manager")
 	print("XP_MANAGER: _ready called")
 	EventBus.game_started.connect(_on_game_started)
 	_precalculate_lootbox_levels()

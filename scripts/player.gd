@@ -54,8 +54,6 @@ func _physics_process(delta):
 
 	previous_velocity = velocity
 
-	_apply_enemy_forces()
-
 	if global_position.y < highest_position:
 		highest_position = global_position.y
 
@@ -256,14 +254,3 @@ func die():
 
 	await get_tree().create_timer(0.5).timeout
 	died.emit(current_score)
-
-func _apply_enemy_forces() -> void:
-	var enemies = get_tree().get_nodes_in_group("enemies")
-	var total_force = Vector2.ZERO
-
-	for enemy in enemies:
-		if enemy.has_method("get_magnet_force"):
-			total_force += enemy.get_magnet_force()
-
-	if total_force.length() > 0:
-		velocity += total_force * get_physics_process_delta_time()

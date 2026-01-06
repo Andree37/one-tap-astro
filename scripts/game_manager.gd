@@ -45,6 +45,7 @@ func _ready():
 	highscore_label.text = "Best: " + str(SaveGame.get_highscore())
 	xp_label.text = "Level: 0 | XP: 0/10"
 	xp_bar.value = 0
+	xp_bar.visible = true
 	timer_label.text = "Time: 0:00"
 
 	start_overlay.visible = true
@@ -88,10 +89,11 @@ func start_game():
 	highscore_label.text = "Best: " + str(SaveGame.get_highscore()) + "m"
 	xp_label.text = "Level: 0 | XP: 0/10"
 	xp_bar.value = 0
+	xp_bar.visible = true
 	timer_label.text = "Time: 0:00"
 
 func _process(delta):
-	if game_started and not player.is_dead:
+	if game_started and not player.is_dead and player.game_active:
 		game_timer += delta
 		_update_timer_display()
 
@@ -107,9 +109,11 @@ func _on_score_changed(score):
 		highscore_label.text = "Best: " + str(score) + "m"
 
 func _on_xp_gained(current_xp: int, level: int) -> void:
-	xp_label.text = "Level: %d | XP: %d/%d" % [level, current_xp - (level * 10), 10]
+	var xp_in_level = current_xp - (level * 10)
+	xp_label.text = "Level: %d | XP: %d/%d" % [level, xp_in_level, 10]
 	xp_bar.value = xp_manager.get_xp_progress() * 10.0
-	print("GAME_MANAGER: XP updated - Level: ", level, " XP: ", current_xp)
+	xp_bar.visible = true
+	print("GAME_MANAGER: XP updated - Level: ", level, " XP: ", current_xp, " (", xp_in_level, "/10 in current level)")
 
 func _on_level_up(new_level: int) -> void:
 	print("GAME_MANAGER: Player leveled up to level ", new_level)
@@ -171,22 +175,27 @@ func get_powerup_info(powerup_type: String) -> Dictionary:
 		"JUMP_BOOST":
 			return {
 				"name": "JUMP BOOST!",
-				"description": "Next jump is 50% higher!"
+				"description": "Next 3 jumps are 50% higher!"
 			}
 		"DOUBLE_JUMP":
 			return {
 				"name": "DOUBLE JUMP!",
-				"description": "Press jump in mid-air for one double jump!"
+				"description": "Press jump in mid-air! 3 uses!"
 			}
-		"ROCKET":
-			return {
-				"name": "ROCKET!",
-				"description": "+100 meters instantly!"
-			}
+		# "ROCKET":  # DISABLED - has bugs
+		# 	return {
+		# 		"name": "ROCKET!",
+		# 		"description": "+100 meters instantly!"
+		# 	}
 		"WALL":
 			return {
 				"name": "WALL GUARD!",
-				"description": "Side walls for 5 seconds!"
+				"description": "Side walls for 20 seconds!"
+			}
+		"XP_MULTIPLIER":
+			return {
+				"name": "XP MULTIPLIER!",
+				"description": "2x XP for 20 seconds!"
 			}
 		_:
 			return {

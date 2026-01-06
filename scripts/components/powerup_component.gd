@@ -25,7 +25,7 @@ func _ready() -> void:
 func _on_game_started() -> void:
 	clear_all_powerups()
 
-func collect_powerup(type: PowerupType, duration: float = 10.0) -> void:
+func collect_powerup(type: PowerupType, duration: float = 20.0) -> void:
 	print("POWERUP: collect_powerup called with type: ", PowerupType.keys()[type])
 	match type:
 		PowerupType.JUMP_BOOST:
@@ -59,9 +59,9 @@ func activate_jump_boost(_duration: float) -> void:
 		return
 
 	active_powerups["jump_boost_original"] = player.JUMP_FORCE
-	active_powerups["jump_boost_uses"] = 1
+	active_powerups["jump_boost_uses"] = 3
 	player.JUMP_FORCE *= 1.5
-	print("POWERUP: Jump boost activated - 1 use available")
+	print("POWERUP: Jump boost activated - 3 uses available")
 
 func activate_double_jump(_duration: float) -> void:
 	if active_powerups.has("double_jump"):
@@ -69,8 +69,8 @@ func activate_double_jump(_duration: float) -> void:
 
 	player.can_double_jump = true
 	player.double_jump_available = true
-	active_powerups["double_jump_uses"] = 1
-	print("POWERUP: Double jump activated - 1 use available")
+	active_powerups["double_jump_uses"] = 3
+	print("POWERUP: Double jump activated - 3 uses available")
 
 func activate_rocket() -> void:
 	var boost_meters = 100
@@ -78,16 +78,18 @@ func activate_rocket() -> void:
 	print("POWERUP: ROCKET activated! Boosting ", boost_meters, " meters (", boost_distance, " pixels)")
 
 	var camera = player.get_viewport().get_camera_2d()
-	var target_y = player.global_position.y - boost_distance
+	var start_y = player.global_position.y
+	var target_y = start_y - boost_distance
 	var screen_center_x = camera.global_position.x
-	var landing_pos = Vector2(screen_center_x, target_y + 100)
 
 	player.velocity = Vector2.ZERO
 	player.can_jump = false
-	print("POWERUP: Starting rocket tween from ", player.global_position.y, " to ", target_y)
+	print("POWERUP: Starting rocket tween from ", start_y, " to ", target_y)
 
 	var spawner = player.get_tree().get_root().get_node("Main/PlatformSpawner")
-	spawner.pause_spawning_for(1.5)
+	spawner.pause_spawning_for(8.0)
+
+	call_deferred("spawn_rocket_platforms", start_y, target_y, screen_center_x)
 
 	var tween = create_tween()
 	tween.set_parallel(true)
@@ -97,32 +99,46 @@ func activate_rocket() -> void:
 
 	tween.chain().tween_callback(func():
 		player.highest_position = player.global_position.y
+		player.highest_position_ever = player.global_position.y
 		player.last_score_position = player.global_position.y
 
 		print("POWERUP: Rocket tween complete, adding ", boost_meters, " points")
 		for i in range(boost_meters):
 			player.add_score()
-
-		call_deferred("spawn_landing_platform", landing_pos)
-
-		get_tree().create_timer(0.3).timeout.connect(func():
-			for i in range(3):
-				spawner.spawn_platform()
-		)
 	)
 
-func spawn_landing_platform(position: Vector2) -> void:
+func spawn_rocket_platforms(start_y: float, target_y: float, center_x: float) -> void:
 	var platform_scene = load("res://scenes/platform.tscn")
-	var platform = platform_scene.instantiate()
-	platform.global_position = position
-	platform.speed = 100.0
-
 	var main_scene = player.get_tree().get_root().get_node("Main")
-	main_scene.add_child(platform)
-	get_tree().create_timer(5.0).timeout.connect(func():
-		if is_instance_valid(platform):
-			platform.queue_free()
+
+	var num_platforms = 6
+	var step = (start_y - target_y) / float(num_platforms)
+
+	for i in range(1, num_platforms):
+		var platform = platform_scene.instantiate()
+		var y_pos = start_y - (step * i)
+		var x_offset = randf_range(-150, 150)
+		platform.global_position = Vector2(center_x + x_offset, y_pos)
+		platform.speed = 0.0
+
+		main_scene.add_child(platform)
+
+		get_tree().create_timer(15.0).timeout.connect(func():
+			if is_instance_valid(platform):
+				platform.queue_free()
+		)
+
+	var landing_platform = platform_scene.instantiate()
+	landing_platform.global_position = Vector2(center_x, target_y + 100)
+	landing_platform.speed = 0.0
+	main_scene.add_child(landing_platform)
+
+	get_tree().create_timer(15.0).timeout.connect(func():
+		if is_instance_valid(landing_platform):
+			landing_platform.queue_free()
 	)
+
+	print("POWERUP: Spawned ", num_platforms, " stationary platforms along rocket path")
 
 func activate_wall(_duration: float) -> void:
 	if active_powerups.has("wall"):
@@ -133,9 +149,9 @@ func activate_wall(_duration: float) -> void:
 	if not active_powerups.has("left_wall_node"):
 		call_deferred("spawn_walls")
 
-	print("POWERUP: Wall powerup activated")
+	print("POWERUP: Wall powerup activated for ", _duration, " seconds")
 
-	var timer = get_tree().create_timer(5.0)
+	var timer = get_tree().create_timer(_duration)
 	active_powerups["wall"] = timer
 
 	timer.timeout.connect(func():

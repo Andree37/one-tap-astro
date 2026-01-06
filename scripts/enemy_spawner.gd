@@ -5,6 +5,8 @@ class_name EnemySpawner
 signal boss_spawned(boss: Enemy)
 signal final_boss_appeared(boss: Enemy)
 
+
+
 @export var spawn_interval_min: float = 10.0
 @export var spawn_interval_max: float = 20.0
 @export var boss_spawn_time: float = 60.0
@@ -22,6 +24,8 @@ var camera: Camera2D = null
 var player: CharacterBody2D = null
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_PAUSABLE
+
 	EventBus.game_started.connect(_on_game_started)
 	EventBus.game_over.connect(_on_game_over)
 
@@ -84,7 +88,7 @@ func spawn_final_boss() -> void:
 
 	var spawn_pos = Vector2(
 		camera.global_position.x,
-		camera.global_position.y - spawn_distance_ahead
+		camera.global_position.y + spawn_distance_ahead
 	)
 
 	var enemy_scene = load("res://scenes/enemy.tscn")
@@ -98,8 +102,7 @@ func spawn_final_boss() -> void:
 	boss.health = 30
 	boss.max_health = 30
 	boss.scale = Vector2(3.0, 3.0)
-	boss.magnet_radius = 500.0
-	boss.magnet_force = 800.0
+	boss.bounce_force = 1200.0
 
 	boss.enemy_died.connect(_on_enemy_died)
 
@@ -110,7 +113,7 @@ func spawn_final_boss() -> void:
 	print("ENEMY_SPAWNER: Final boss spawned with 30 HP")
 
 func _find_spawn_position() -> Vector2:
-	var spawn_y = camera.global_position.y - spawn_distance_ahead
+	var spawn_y = camera.global_position.y + spawn_distance_ahead
 	var screen_center_x = camera.global_position.x
 	var spawn_range = 200.0
 
