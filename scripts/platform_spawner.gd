@@ -18,7 +18,7 @@ class_name PlatformSpawner
 @export_group("Platform Spacing")
 @export var min_horizontal_gap: float = 30.0
 @export var min_vertical_gap: float = 120.0
-@export var max_vertical_gap: float = 220.0
+@export var max_vertical_gap: float = 200.0
 @export var player_horizontal_clearance: float = 50.0
 @export var player_vertical_clearance: float = 80.0
 

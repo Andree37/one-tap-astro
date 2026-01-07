@@ -120,7 +120,7 @@ func _spawn_floating_xp_text(amount: int) -> void:
 	var floating_text = floating_xp_text_scene.instantiate()
 	get_parent().add_child(floating_text)
 	floating_text.global_position = global_position + Vector2(0, -60)
-	floating_text.set_xp_amount(amount, false)
+	floating_text.set_xp_amount(amount, false, true)
 
 func die() -> void:
 	print("ENEMY: Died! Boss: ", is_boss)
